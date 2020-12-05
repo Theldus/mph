@@ -1,3 +1,16 @@
+Note:
+-----
+This is a fork of the original mph v1.2 obtained here:
+http://www.ibiblio.org/pub/Linux/devel/lang/c/!INDEX.short.html
+
+I'm not the original maintainer and I don't intend to be. This
+repository just concentrates a few small changes on the code
+that I thought it would be useful to have. Also, MPH is a very
+good project, so this repository also serves as a backup. We
+shouldn't let the project disappear.
+
+Original readme:
+----------------
 This is version 1.2 of mph, an order preserving minimal perfect hash
 function generator for string keys. It uses the algorithm presented
 in the paper:
