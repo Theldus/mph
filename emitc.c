@@ -6,7 +6,7 @@
 #include <assert.h>
 
 int	d, n, m, maxlen, minklen, maxklen, minchar, maxchar, loop, alphasz;
-int	binary=0, compact=1, safe=0, len=0;
+int	binary=0, compact=1, safe=0, len=0, insensitive=0;
 
 int
 readint(void)
@@ -34,6 +34,9 @@ void
 emitconst(void)
 {
 	assert(scanf("%d\n", &binary) == 1);
+
+	printf("/* Auto-generated code, please do not edit manually! */\n");
+	printf("#include <ctype.h>\n\n");
 
 	printf("/*\n");
 	printf(" * d=%d\n",		d = readint());
@@ -121,12 +124,15 @@ emithash(void)
 	printf("{\n");
 	if (maxlen > 1)
 		printf("\tint i;\n");
+	if (len)
+		printf("\tint pos;\n");
 	printf("\tunsigned ");
 	if (d == 2)
 		printf("f0, f1;\n");
 	else
 		printf("f0, f1, f2;\n");
 	printf("\tconst uchar *kp = key;\n");
+	printf("\tint c;\n");
 	printf("\n");
 	if (safe && len) {
 		printf("\tif (len < %d || len > %d)\n", minklen, maxklen);
@@ -137,11 +143,19 @@ emithash(void)
 	if (maxlen > 1)
 		printf("i=%d, ", compact ? -minchar : 0);
 	if (d == 2)
-		printf("f0=f1=0; *kp; ++kp) {\n");
+		printf("f0=f1=0");
 	else
-		printf("f0=f1=f2=0; *kp; ++kp) {\n");
+		printf("f0=f1=f2=0");
+	if (len)
+		printf(", pos=0; pos < len; ++kp, ++pos) {\n");
+	else
+		printf("; *kp; ++kp) {\n");
+	if (insensitive)
+		printf("\t\tc = tolower(*kp);\n");
+	else
+		printf("\t\tc = *kp;\n");
 	if (safe && compact) {
-		printf("\t\tif (*kp < %d || *kp > %d)\n", minchar, maxchar);
+		printf("\t\tif (c < %d || c > %d)\n", minchar, maxchar);
 		printf("\t\t\treturn -1;\n");
 	}
 	if (safe && !len) {
@@ -149,10 +163,10 @@ emithash(void)
 		printf("\t\t\treturn -1;\n");
 	}
 	if (maxlen > 1) {
-		printf("\t\tf0 += T0[i + *kp];\n");
-		printf("\t\tf1 += T1[i + *kp];\n");
+		printf("\t\tf0 += T0[i + c];\n");
+		printf("\t\tf1 += T1[i + c];\n");
 		if (d == 3)
-			printf("\t\tf2 += T2[i + *kp];\n");
+			printf("\t\tf2 += T2[i + c];\n");
 		printf("\t\ti += %d;\n", alphasz);
 		if (maxlen < maxklen)
 			printf("\t\tif (i >= %d)\n\t\t\ti = %d;\n",
@@ -161,10 +175,10 @@ emithash(void)
 	}
 	else {
 		int i = compact ? -minchar : 0;
-		printf("\t\tf0 += T0[%d + *kp];\n", i);
-		printf("\t\tf1 += T1[%d + *kp];\n", i);
+		printf("\t\tf0 += T0[%d + c];\n", i);
+		printf("\t\tf1 += T1[%d + c];\n", i);
 		if (d == 3)
-			printf("\t\tf2 += T2[%d + *kp];\n", i);
+			printf("\t\tf2 += T2[%d + c];\n", i);
 	}
 	printf("\t}\n");
 	if (safe && !len) {
@@ -208,7 +222,7 @@ emithash(void)
 void
 usage(void)
 {
-	fprintf(stderr, "usage: emitc [-n] [-s] [-l]\n");
+	fprintf(stderr, "usage: emitc [-n] [-s] [-l] [-i]\n");
 	exit(1);
 }
 
@@ -217,7 +231,7 @@ getargs(int argc, char **argv)
 {
 	int opt;
 
-	while ((opt = getopt(argc, argv, "nsl")) != -1)
+	while ((opt = getopt(argc, argv, "nsli")) != -1)
 		switch (opt) {
 		case 'n':
 			compact = 0;
@@ -227,6 +241,9 @@ getargs(int argc, char **argv)
 			break;
 		case 'l':
 			len = 1;
+			break;
+		case 'i':
+			insensitive = 1;
 			break;
 		case '?':
 			usage();
